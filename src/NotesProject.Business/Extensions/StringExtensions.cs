@@ -4,7 +4,7 @@
 	{
 		public static string Capitalize(this string text)
 		{
-			return text.Substring(0, 1).ToUpper() +text.Substring(1).ToLower();
+			return text.Substring(0, 1).ToUpper() + text.Substring(1).ToLower();
 		}
 	}
 }
