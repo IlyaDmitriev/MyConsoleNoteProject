@@ -24,6 +24,7 @@ namespace ConsoleNotes.Services.Implementations
 				{ Command.Edit, "edit note" },
 				{ Command.Delete, "delete note" },
 				{ Command.Help, "get help" },
+				{ Command.Exit, "exit from application" }
 			};
 		}
 
@@ -133,6 +134,11 @@ namespace ConsoleNotes.Services.Implementations
 		public void ShowHelp()
 		{
 			CommandHelper.ShowHelp(_commandsWithDescription);
+		}
+
+		public void ExitFromApp()
+		{
+			Environment.Exit(0);
 		}
 	}
 }

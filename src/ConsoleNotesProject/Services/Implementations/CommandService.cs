@@ -74,6 +74,11 @@ namespace ConsoleNotes.Services.Implementations
 					CommandHelper.DoActionOnResponse("y", () => { CommandHelper.BackToTheRoots(); }, () => { });
 
 					break;
+
+				case Command.Exit:
+					_noteService.ExitFromApp();
+
+					break;
 			}
 		}
 	}

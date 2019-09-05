@@ -2,6 +2,7 @@
 using NotesProject.Business.Models;
 using System.Collections.Generic;
 using System.Linq;
+using NotesProject.Business.Provider;
 
 namespace NotesProject.Business.Services.Implementations
 {
@@ -9,9 +10,9 @@ namespace NotesProject.Business.Services.Implementations
 	{
 		private static List<Note> Notes { get; set; }
 		
-		public NoteRepository()
+		public NoteRepository(NoteProvider noteProvider)
 		{
-			Notes = new List<Note>(); 
+			Notes = noteProvider.CreateNoteList();
 		}
 
 		public void AddNote(string title, string text)

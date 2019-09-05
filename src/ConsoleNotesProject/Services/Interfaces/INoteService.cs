@@ -7,5 +7,6 @@
 		void DeleteNote();
 		void EditNote();
 		void ShowHelp();
+		void ExitFromApp();
 	}
 }
