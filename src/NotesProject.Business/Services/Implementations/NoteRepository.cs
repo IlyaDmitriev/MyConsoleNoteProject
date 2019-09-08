@@ -9,28 +9,36 @@ namespace NotesProject.Business.Services.Implementations
 	public class NoteRepository : INoteRepository
 	{
 		private static List<Note> Notes { get; set; }
-		
-		public NoteRepository(NoteProvider noteProvider)
+
+		public NoteRepository(INoteProvider noteProvider)
 		{
 			Notes = noteProvider.CreateNoteList();
 		}
 
 		public void AddNote(string title, string text)
 		{
-			Notes.Add(new Note
+			if (!(string.IsNullOrWhiteSpace(title)
+				&& string.IsNullOrWhiteSpace(text)))
 			{
-				Id = Notes.Count + 1,
-				Title = title,
-				Text = text,
-			});
+				Notes.Add(new Note
+				{
+					Id = Notes.Count + 1,
+					Title = title,
+					Text = text,
+				});
+			}
 		}
 
 		public void EditNote(int id, string title, string text)
 		{
-			var toEdit = GetNote(id);
+			if((!string.IsNullOrWhiteSpace(title) || !string.IsNullOrWhiteSpace(text))
+				&& id != null)
+			{
+				var toEdit = GetNote(id);
 
-			toEdit.Title = title;
-			toEdit.Text = text;
+				toEdit.Title = title;
+				toEdit.Text = text;
+			}
 		}
 
 		public void DeleteNote(int id)

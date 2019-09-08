@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NotesProject.Business.Provider
 {
-	public class NoteProvider
+	public class NoteProvider : INoteProvider
 	{
 		public List<Note> CreateNoteList()
 		{
