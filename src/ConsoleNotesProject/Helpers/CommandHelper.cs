@@ -30,7 +30,7 @@ namespace ConsoleNotes.Helpers
 
 			foreach (var command in commandsWithDescription)
 			{
-				Console.WriteLine($"#      Enter '{nameof(command.Key)}', if you need to {command.Value}");
+				Console.WriteLine($"#      Enter '{command.Key}', if you need to {command.Value}");
 			}
 
 			Console.WriteLine("#################################################################");

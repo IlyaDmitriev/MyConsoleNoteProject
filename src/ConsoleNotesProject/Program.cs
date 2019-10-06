@@ -25,9 +25,11 @@ namespace ConsoleNotes
 		private static void ConfigureServices(IServiceCollection serviceCollection)
 		{
 			// add services
+			serviceCollection.AddTransient<IConsoleProvider, ConsoleProvider>();
 			serviceCollection.AddTransient<ICommandService, CommandService>();
 			serviceCollection.AddTransient<INoteRepository, NoteRepository>();
-			serviceCollection.AddTransient<INoteService, NoteConsoleService>();			
+			serviceCollection.AddTransient<INoteService, NoteConsoleService>();
+			serviceCollection.AddTransient<INoteProvider, NoteProvider>();
 
 			// add app
 			serviceCollection.AddTransient<NoteApp>();

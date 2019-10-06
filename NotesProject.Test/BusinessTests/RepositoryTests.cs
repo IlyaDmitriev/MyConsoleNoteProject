@@ -67,6 +67,21 @@ namespace NotesProject.Test.BusinessTests
 			Assert.True(notes.Exists(x => x.Title == title && x.Text == text));
 		}
 
+		[Fact]
+		public void AddNoteTest_When_AddAfterDelete_Then_CorrectId()
+		{
+			var repository = new NoteRepository(mock.Object);
+
+			for(var i = 1; i <= 5; i++)
+				repository.AddNote($"title{i}", $"text{i}");
+
+			repository.DeleteNote(4);
+			repository.AddNote($"title{6}", $"text{6}");
+			var notes = repository.GetNotes();
+
+			Assert.True(notes.FindAll(x => x.Id == 5).Count == 1);
+		}
+
 		#endregion
 		#region [ DeleteNoteTests ]
 

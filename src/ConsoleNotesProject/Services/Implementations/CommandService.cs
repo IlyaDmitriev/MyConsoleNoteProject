@@ -9,18 +9,20 @@ namespace ConsoleNotes.Services.Implementations
 	public class CommandService : ICommandService
 	{
 		private readonly INoteService _noteService;
+		private readonly IConsoleProvider _console;
 
-		public CommandService(INoteService noteService)
+		public CommandService(INoteService noteService, IConsoleProvider console)
 		{
 			_noteService = noteService ?? throw new ArgumentNullException(nameof(noteService));
+			_console = console ?? throw new ArgumentNullException(nameof(console));
 		}
 
 		public void Handle(string strCommand)
 		{
 			if (!Enum.TryParse(strCommand.Capitalize(), out Command command))
 			{
-				Console.WriteLine($"Wrong input! Press any key to proceed...");
-				Console.ReadKey();
+				_console.WriteLine($"Wrong input! Press any key to proceed...");
+				_console.ReadKey();
 				return;
 			}
 
@@ -36,16 +38,16 @@ namespace ConsoleNotes.Services.Implementations
 				case Command.Add:
 					_noteService.AddNote();
 
-					Console.WriteLine("Do you want to add another note? (y/n)");
-					CommandHelper.DoActionOnResponse(Console.ReadLine(), () => { Handle(Command.Add); }, () => { CommandHelper.BackToTheRoots(); });
+					_console.WriteLine("Do you want to add another note? (y/n)");
+					CommandHelper.DoActionOnResponse(_console.ReadLine(), () => { Handle(Command.Add); }, () => { CommandHelper.BackToTheRoots(); });
 
 					break;
 
 				case Command.List:
 					_noteService.ShowNotes();
 
-					Console.WriteLine("Press any key to return to the main window...");
-					Console.ReadKey();
+					_console.WriteLine("Press any key to return to the main window...");
+					_console.ReadKey();
 					CommandHelper.DoActionOnResponse("y", () => { CommandHelper.BackToTheRoots(); }, () => { });
 
 					break;
@@ -53,24 +55,24 @@ namespace ConsoleNotes.Services.Implementations
 				case Command.Delete:
 					_noteService.DeleteNote();
 
-					Console.WriteLine("Do you want to delete another note? (y/n)");
-					CommandHelper.DoActionOnResponse(Console.ReadLine(), () => { Handle(Command.Delete); }, () => { CommandHelper.BackToTheRoots(); });
+					_console.WriteLine("Do you want to delete another note? (y/n)");
+					CommandHelper.DoActionOnResponse(_console.ReadLine(), () => { Handle(Command.Delete); }, () => { CommandHelper.BackToTheRoots(); });
 
 					break;
 
 				case Command.Edit:
 					_noteService.EditNote();
 
-					Console.WriteLine("Do you want to edit another note? (y/n)");
-					CommandHelper.DoActionOnResponse(Console.ReadLine(), () => { Handle(Command.Edit); }, () => { CommandHelper.BackToTheRoots(); });
+					_console.WriteLine("Do you want to edit another note? (y/n)");
+					CommandHelper.DoActionOnResponse(_console.ReadLine(), () => { Handle(Command.Edit); }, () => { CommandHelper.BackToTheRoots(); });
 
 					break;
 
 				case Command.Help:
 					_noteService.ShowHelp();
 
-					Console.WriteLine("Press any key to return to the main window...");
-					Console.ReadKey();
+					_console.WriteLine("Press any key to return to the main window...");
+					_console.ReadKey();
 					CommandHelper.DoActionOnResponse("y", () => { CommandHelper.BackToTheRoots(); }, () => { });
 
 					break;
