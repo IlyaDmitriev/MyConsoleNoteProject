@@ -1,84 +1,89 @@
 ﻿using ConsoleNotes.Services.Implementations;
 using ConsoleNotes.Services.Interfaces;
+using ConsoleNotes.Models.Enums;
 using Moq;
 using NotesProject.Business.Models;
 using NotesProject.Business.Services.Implementations;
 using NotesProject.Business.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Utilities;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace NotesProject.Test.ConsoleNotesTests
 {
 	public class NoteConsoleServiceTests
 	{
-		private readonly Mock<INoteProvider> _noteProviderMock;
-		private readonly Mock<IConsoleProvider> _consoleProviderMock;
-
-		public NoteConsoleServiceTests()
-		{
-			_noteProviderMock = new Mock<INoteProvider>();
-			_noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
-
-			_consoleProviderMock = new Mock<IConsoleProvider>();
-		}
-
 		[Fact]
 		public void ShowNoteTest_When_HasElements_Then_ShowList()
 		{
-			//_consoleProviderMock.Setup(x => x.ReadLine()).Returns(" ");
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
 
 			var title = "title";
 			var text = "text";
 			var id = 1;
 
-			var repository = new NoteRepository(_noteProviderMock.Object);
+			var repository = new NoteRepository(noteProviderMock.Object);
 			repository.AddNote(title, text);
 
 			var fakeConsoleProvider = new FakeConsoleProvider(null);
-			var service = new NoteConsoleService(repository, fakeConsoleProvider);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
 
-			service.ShowNotes();
+			service.Handle(nameof(Command.List));
 
-			Assert.Equal($"Here are list of all notes:{Environment.NewLine}" +
-				$"id: {id} || title: '{title}' || text: '{text}'{Environment.NewLine}", fakeConsoleProvider.Output);
+			var expected = $"Here are list of all notes:{Environment.NewLine}" +
+				$"id: {id} || title: '{title}' || text: '{text}'{Environment.NewLine}" +
+				$"Press any key to return to the main window...{Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
 		}
 
 		[Fact]
 		public void ShowNoteTest_When_NoElements_Then_ShowInfoMessage()
 		{
-			var repository = new NoteRepository(_noteProviderMock.Object);
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var repository = new NoteRepository(noteProviderMock.Object);
 
 			var fakeConsoleProvider = new FakeConsoleProvider(null);
-			var service = new NoteConsoleService(repository, fakeConsoleProvider);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
 
-			service.ShowNotes();
-
-			Assert.Equal($"There are zero notes.{Environment.NewLine}", fakeConsoleProvider.Output);
+			service.Handle(nameof(Command.List));
+			var expected = $"There are zero notes.{Environment.NewLine}" +
+				$"Press any key to return to the main window...{Environment.NewLine}";
+			Assert.Equal(expected, fakeConsoleProvider.Output);
 		}
 
 		[Fact]
 		public void AddNoteTest_When_CorrectTitleOrText_Then_Add()
 		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
 			var title = "title";
 			var text = "text";
 
-			var repository = new NoteRepository(_noteProviderMock.Object);
-			var linesToRead = new List<string>() { title, text };
+			var repository = new NoteRepository(noteProviderMock.Object);
+			var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(repository, fakeConsoleProvider);
+			var service = new NoteConsoleService(
+				repository, 
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
 
-			service.AddNote();
+			service.Handle(nameof(Command.Add));
 
 			var expected = $"Enter note title{Environment.NewLine}" +
-				$"> " +
-				$"Enter note text{Environment.NewLine}" +
-				$"> " +
-				$"Note was added.{Environment.NewLine}";
+				$"> Enter note text{Environment.NewLine}" +
+				$"> Note was added.{Environment.NewLine}" +
+				$"Do you want to add another note? (y/n){Environment.NewLine}";
 
 			Assert.Equal(expected, fakeConsoleProvider.Output);
 		}
@@ -86,21 +91,295 @@ namespace NotesProject.Test.ConsoleNotesTests
 		[Fact]
 		public void AddNoteTest_When_NotCorrectTitleOrText_Then_NotAdd()
 		{
-			var title = "title";
-			var text = "text";
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
 
-			var repository = new NoteRepository(_noteProviderMock.Object);
-			var linesToRead = new List<string>() { title, text };
+			var title = string.Empty;
+			var text = string.Empty;
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(repository, fakeConsoleProvider);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
 
-			service.AddNote();
+			service.Handle(nameof(Command.Add));
 
 			var expected = $"Enter note title{Environment.NewLine}" +
-				$"> " +
-				$"Enter note text{Environment.NewLine}" +
-				$"> " +
-				$"Note was not added. Enter title or text.{Environment.NewLine}";
+				$"> Enter note text{Environment.NewLine}" +
+				$"> Note was not added. Enter title or text.{Environment.NewLine}" +
+				$"Do you want to add another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void DeleteNoteTest_When_IdNotCorrect_Then_NotDeleted()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "text";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			var linesToRead = new List<string>() { id, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Delete));
+
+			var expected = $"Please enter id of note to delete:{Environment.NewLine}" +
+				$"Id [{id}] is not a number.{Environment.NewLine}" +
+				$"Do you want to delete another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void DeleteNoteTest_When_CorrectIdAndNoteNotExists_Then_NotDeleted()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "54";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote("title", "text");
+			var linesToRead = new List<string>() { id, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Delete));
+
+			var expected = $"Please enter id of note to delete:{Environment.NewLine}" +
+				$"The note with id [{id}] is not exist in the list of notes.{Environment.NewLine}" +
+				$"Do you want to delete another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void DeleteNoteTest_When_CorrectIdAndNoteExists_Then_Delete()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "1";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote("title", "text");
+			var linesToRead = new List<string>() { id, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Delete));
+
+			var expected = $"Please enter id of note to delete:{Environment.NewLine}" +
+				$"The note with id [{id}] was successfully deleted.{Environment.NewLine}" +
+				$"Do you want to delete another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_IdNotCorrect_Then_NotEdit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "text";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			var linesToRead = new List<string>() { id, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"Id [{id}] is not a number.{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_IdNotCorrectAndNotExist_Then_NotEdit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "44";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote("title", "text");
+			var linesToRead = new List<string>() { id, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"The note with id [{id}] is not exist in the list of notes.{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_DataCorrect_Then_Edit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "1";
+			var title = "title";
+			var text = "text";
+			var newTitle = "newTitle";
+			var newText = "newText";
+			var areYouSureAboutThat = "y";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote(title, text);
+			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
+				$"> Are you sure (y/n)?{Environment.NewLine}" +
+				$"Current text of this note: {text}. Pick a new text:{Environment.NewLine}" +
+				$"> Text was successfully changed.{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_TitleAndTextAreEmpty_Then_NotEdit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "1";
+			var title = "title";
+			var text = "text";
+			var newTitle = string.Empty;
+			var newText = string.Empty;
+			var areYouSureAboutThat = "y";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote(title, text);
+			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
+				$"> Are you sure (y/n)?{Environment.NewLine}" +
+				$"Current text of this note: {text}. Pick a new text:{Environment.NewLine}" +
+				$"> Text was NOT successfully changed. Enter title or text.{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_YouNotSureAfterChangeTitle_Then_NotEdit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "1";
+			var title = "title";
+			var text = "text";
+			var newTitle = string.Empty;
+			var newText = string.Empty;
+			var areYouSureAboutThat = "n";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote(title, text);
+
+			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
+				$"> Are you sure (y/n)?{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}" +
+				$"Wrong input! Pass only \"y\" or \"n\".{Environment.NewLine}";
+
+			Assert.Equal(expected, fakeConsoleProvider.Output);
+		}
+
+		[Fact]
+		public void EditNoteTest_When_NotCorrectareYouSureAboutThat_Then_NotEdit()
+		{
+			var noteProviderMock = new Mock<INoteProvider>();
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+
+			var id = "1";
+			var title = "title";
+			var text = "text";
+			var newTitle = string.Empty;
+			var newText = string.Empty;
+			var areYouSureAboutThatNotCorrect = "error";
+			var areYouSureAboutThat = "y";
+
+			var repository = new NoteRepository(noteProviderMock.Object);
+			repository.AddNote(title, text);
+
+			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThatNotCorrect, areYouSureAboutThat, newText, "n" };
+			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
+
+			var service = new NoteConsoleService(
+				repository,
+				fakeConsoleProvider,
+				new Mock<ICommandHelper>().Object);
+
+			service.Handle(nameof(Command.Edit));
+
+			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
+				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
+				$"> Are you sure (y/n)?{Environment.NewLine}" +
+				$"Wrong input! Pass only \"y\" or \"n\".{Environment.NewLine}" +
+				$"Current text of this note: {text}. Pick a new text:{Environment.NewLine}" +
+				$"> Text was NOT successfully changed. Enter title or text.{Environment.NewLine}" +
+				$"Do you want to edit another note? (y/n){Environment.NewLine}";
 
 			Assert.Equal(expected, fakeConsoleProvider.Output);
 		}

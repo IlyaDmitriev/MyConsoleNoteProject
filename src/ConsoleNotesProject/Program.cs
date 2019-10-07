@@ -1,4 +1,5 @@
-﻿using ConsoleNotes.Services.Implementations;
+﻿using ConsoleNotes.Helpers;
+using ConsoleNotes.Services.Implementations;
 using ConsoleNotes.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NotesProject.Business.Provider;
@@ -26,14 +27,13 @@ namespace ConsoleNotes
 		{
 			// add services
 			serviceCollection.AddTransient<IConsoleProvider, ConsoleProvider>();
-			serviceCollection.AddTransient<ICommandService, CommandService>();
 			serviceCollection.AddTransient<INoteRepository, NoteRepository>();
 			serviceCollection.AddTransient<INoteService, NoteConsoleService>();
 			serviceCollection.AddTransient<INoteProvider, NoteProvider>();
+			serviceCollection.AddTransient<ICommandHelper, CommandHelper>();
 
 			// add app
 			serviceCollection.AddTransient<NoteApp>();
-			serviceCollection.AddTransient<NoteProvider>();
 		}
 	}
 }

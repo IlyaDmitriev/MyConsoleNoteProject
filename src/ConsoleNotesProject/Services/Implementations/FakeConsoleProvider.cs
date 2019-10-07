@@ -40,5 +40,19 @@ namespace ConsoleNotes.Services.Implementations
 		{
 			Output += input + Environment.NewLine;
 		}
+
+		public void WriteLine()
+		{
+			Output += Environment.NewLine;
+		}
+
+		public void Clear()
+		{
+			Output = string.Empty;
+		}
+
+		public void SetTitle(string title)
+		{			
+		}
 	}
 }

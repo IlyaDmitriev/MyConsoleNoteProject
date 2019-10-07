@@ -24,5 +24,20 @@ namespace ConsoleNotes.Services.Implementations
 		{
 			Console.WriteLine(input);
 		}
+
+		public void WriteLine()
+		{
+			Console.WriteLine();
+		}
+
+		public void Clear()
+		{
+			Console.Clear();
+		}
+
+		public void SetTitle(string title)
+		{
+			Console.Title = title;
+		}
 	}
 }

@@ -1,10 +1,11 @@
 ﻿using ConsoleNotes.Helpers;
 using ConsoleNotes.Services.Interfaces;
 using ConsoleNotes.Models.Enums;
-using NotesProject.Business.Services.Interfaces;
+using NotesProject.Business.Extensions;
 using System;
-using System.Collections.Generic;
+using NotesProject.Business.Services.Interfaces;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace ConsoleNotes.Services.Implementations
 {
@@ -13,11 +14,16 @@ namespace ConsoleNotes.Services.Implementations
 		private readonly Dictionary<Command, string> _commandsWithDescription;
 		private readonly INoteRepository _noteRepository;
 		private readonly IConsoleProvider _console;
+		private readonly ICommandHelper _commandHelper;
 
-		public NoteConsoleService(INoteRepository noteRepository, IConsoleProvider console)
+		public NoteConsoleService(
+			INoteRepository noteRepository,
+			IConsoleProvider console,
+			ICommandHelper commandHelper)
 		{
 			_noteRepository = noteRepository ?? throw new ArgumentNullException(nameof(noteRepository));
 			_console = console ?? throw new ArgumentNullException(nameof(console));
+			_commandHelper = commandHelper ?? throw new ArgumentNullException(nameof(commandHelper));
 
 			_commandsWithDescription = new Dictionary<Command, string>
 			{
@@ -30,7 +36,57 @@ namespace ConsoleNotes.Services.Implementations
 			};
 		}
 
-		public void AddNote()
+		public void Handle(string strCommand)
+		{
+			if (!Enum.TryParse(strCommand.Capitalize(), out Command command))
+			{
+				_console.WriteLine($"Wrong input! Press any key to proceed...");
+				_console.ReadKey();
+				return;
+			}
+
+			Handle(command);
+		}
+
+		public void Handle(Command command)
+		{
+			_commandHelper.BackToTheRoots();
+
+			switch (command)
+			{
+				case Command.Add:
+					AddNote();
+
+					break;
+
+				case Command.List:
+					ShowNotes();
+
+					break;
+
+				case Command.Delete:
+					DeleteNote();
+					
+					break;
+
+				case Command.Edit:
+					EditNote();
+
+					break;
+
+				case Command.Help:
+					ShowHelp();
+
+					break;
+
+				case Command.Exit:
+					ExitFromApp();
+
+					break;
+			}
+		}
+
+		private void AddNote()
 		{
 			string getConsoleString(string message)
 			{
@@ -52,9 +108,15 @@ namespace ConsoleNotes.Services.Implementations
 			{
 				_console.WriteLine("Note was not added. Enter title or text.");
 			}
+
+			_console.WriteLine("Do you want to add another note? (y/n)");
+			DoActionOnResponse(
+				_console.ReadLine(),
+				() => { Handle(Command.Add); },
+				() => { _commandHelper.BackToTheRoots(); });
 		}
 
-		public void ShowNotes()
+		private void ShowNotes()
 		{
 			var notes = _noteRepository.GetNotes();
 
@@ -71,12 +133,17 @@ namespace ConsoleNotes.Services.Implementations
 			{
 				_console.WriteLine("There are zero notes.");
 			}
+
+			_console.WriteLine("Press any key to return to the main window...");
+			_console.ReadKey();
+			DoActionOnResponse("y", () => { _commandHelper.BackToTheRoots(); }, () => { });
 		}
 
-		public void DeleteNote()
+		private void DeleteNote()
 		{
 			_console.WriteLine("Please enter id of note to delete:");
-			var successfulParsing = Int32.TryParse(_console.ReadLine(), out var id);
+			var input = _console.ReadLine();
+			var successfulParsing = Int32.TryParse(input, out var id);
 
 			if (successfulParsing)
 			{
@@ -92,11 +159,17 @@ namespace ConsoleNotes.Services.Implementations
 			}
 			else
 			{
-				_console.WriteLine($"Id [{id}] is not a number.");
+				_console.WriteLine($"Id [{input}] is not a number.");
 			}
+
+			_console.WriteLine("Do you want to delete another note? (y/n)");
+			DoActionOnResponse(
+				_console.ReadLine(),
+				() => { Handle(Command.Delete); },
+				() => { _commandHelper.BackToTheRoots(); });
 		}
 
-		public void EditNote()
+		private void EditNote()
 		{
 			_console.WriteLine("Please enter id of note to edit:");
 			var input = _console.ReadLine();
@@ -116,9 +189,7 @@ namespace ConsoleNotes.Services.Implementations
 
 					Action actionYes = () =>
 					{
-						_console.WriteLine("Current text of this note:");
-						_console.WriteLine(toEdit.Text);
-						_console.WriteLine("Now you can change the text:");
+						_console.WriteLine($"Current text of this note: {toEdit.Text}. Pick a new text:");
 						_console.Write("> ");
 
 						var newText = _console.ReadLine();
@@ -129,11 +200,14 @@ namespace ConsoleNotes.Services.Implementations
 						}
 						else
 						{
-							_console.WriteLine("Text was NOT successfully changed. Enter title or text");
+							_console.WriteLine("Text was NOT successfully changed. Enter title or text.");
 						}
 					};
 
-					CommandHelper.DoActionOnResponse(response, actionYes, () => { CommandHelper.BackToTheRoots(); });
+					DoActionOnResponse(
+						response,
+						actionYes,
+						() => { _commandHelper.BackToTheRoots(); });
 				}
 				else
 				{
@@ -144,60 +218,56 @@ namespace ConsoleNotes.Services.Implementations
 			{
 				_console.WriteLine($"Id [{input}] is not a number.");
 			}
+
+			_console.WriteLine("Do you want to edit another note? (y/n)");
+			DoActionOnResponse(
+				_console.ReadLine(),
+				() => { Handle(Command.Edit); },
+				() => { _commandHelper.BackToTheRoots(); });
 		}
 
-		public void EditNote1(int id, string newTitle)
+		private void ShowHelp()
 		{
-			_console.WriteLine("Please enter id of note to edit:");
-			var input = _console.ReadLine();
+			_console.WriteLine("#################################################################");
+			_console.WriteLine("#                             List of commands                    ");
 
-			if (Int32.TryParse(input, out id))
+			foreach (var command in _commandsWithDescription)
 			{
-				if (_noteRepository.IsNoteExist(id))
-				{
-					var toEdit = _noteRepository.GetNote(id);
-					_console.WriteLine($"Current title of this note: {toEdit.Title}. Pick a new title:");
-					_console.Write("> ");
-
-					newTitle = _console.ReadLine();
-					_console.WriteLine($"Are you sure (y/n)?");
-
-					var response = _console.ReadLine();
-
-					Action actionYes = () =>
-					{
-						_console.WriteLine("Title was successfully changed.");
-						_console.WriteLine("Current text of this note:");
-						_console.WriteLine(toEdit.Text);
-						_console.WriteLine("Now you can change the text:");
-						_console.Write("> ");
-
-						var newText = _console.ReadLine();
-						_noteRepository.EditNote(toEdit.Id, newTitle, newText);
-						_console.WriteLine("Text was successfully changed.");
-					};
-
-					CommandHelper.DoActionOnResponse(response, actionYes, () => { CommandHelper.BackToTheRoots(); });
-				}
-				else
-				{
-					_console.WriteLine($"The note with id [{id}] is not exist in the list of notes.");
-				}
+				_console.WriteLine($"#      Enter '{command.Key}', if you need to {command.Value}");
 			}
-			else
-			{
-				_console.WriteLine($"Id [{input}] is not a number.");
-			}
+
+			_console.WriteLine("#################################################################");
+
+			_console.WriteLine("Press any key to return to the main window...");
+			_console.ReadKey();
+			DoActionOnResponse(
+				"y",
+				() => { _commandHelper.BackToTheRoots(); },
+				() => { });
 		}
 
-		public void ShowHelp()
-		{
-			CommandHelper.ShowHelp(_commandsWithDescription);
-		}
-
-		public void ExitFromApp()
+		private void ExitFromApp()
 		{
 			Environment.Exit(0);
+		}
+
+		private void DoActionOnResponse(string response, Action actionYes, Action actionNo)
+		{
+			var formattedResult = response.Trim().ToLower();
+
+			if (formattedResult == "y")
+			{
+				actionYes();
+			}
+			else if (formattedResult == "n")
+			{
+				actionNo();
+			}
+			else
+			{
+				_console.WriteLine("Wrong input! Pass only \"y\" or \"n\".");
+				DoActionOnResponse(_console.ReadLine().Trim().ToLower(), actionYes, actionNo);
+			}
 		}
 	}
 }

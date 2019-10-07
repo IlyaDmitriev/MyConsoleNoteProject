@@ -43,19 +43,6 @@ namespace NotesProject.Test.BusinessTests
 		}
 
 		[Theory]
-		[MemberData(nameof(NoteRepositoryData.AddNote_ListCountNoChanges_Data), MemberType = typeof(NoteRepositoryData))]
-		public void AddNoteTest_When_Add_Then_ListCountNoChanges(string title, string text)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			var countBefore = repository.GetNotes().Count;
-			repository.AddNote(title, text);
-			var countAfter = repository.GetNotes().Count;
-			
-			Assert.Equal(countBefore, countAfter);
-		}
-
-		[Theory]
 		[MemberData(nameof(NoteRepositoryData.AddNote_TextAndTitleHasSetValue_Data), MemberType = typeof(NoteRepositoryData))]
 		public void AddNoteTest_When_Add_Then_TextAndTitleHasSetValue(string title, string text)
 		{
@@ -99,15 +86,6 @@ namespace NotesProject.Test.BusinessTests
 			repository.DeleteNote(3);
 
 			Assert.False(repository.GetNotes().Exists(x => x.Title == newTitle && x.Text == newText));
-		}
-
-		[Theory]
-		[InlineData(null)]
-		public void DeleteNoteTest_When_IdIsNull_Then_Error(int number)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
 		}
 
 		[Theory]
@@ -190,8 +168,7 @@ namespace NotesProject.Test.BusinessTests
 
 		[Theory]
 		[InlineData(0)]
-		[InlineData(null)]
-		public void EditNoteTest_When_IdIsNullOrZero_Then_Error(int number)
+		public void EditNoteTest_When_IdIsZero_Then_Error(int number)
 		{
 			var repository = new NoteRepository(mock.Object);
 
@@ -261,9 +238,8 @@ namespace NotesProject.Test.BusinessTests
 		}
 
 		[Theory]
-		[InlineData(null)]
 		[InlineData(0)]
-		public void GetNoteTest_When_ElementEqualNullOrZero_Then_Error(int number)
+		public void GetNoteTest_When_ElementEqualZero_Then_Error(int number)
 		{
 			var repository = new NoteRepository(mock.Object);
 
@@ -289,7 +265,6 @@ namespace NotesProject.Test.BusinessTests
 		#region [ IsNoteExistTests ]
 
 		[Theory]
-		[InlineData(null)]
 		[InlineData(0)]
 		[InlineData(1)]
 		[InlineData(2)]
