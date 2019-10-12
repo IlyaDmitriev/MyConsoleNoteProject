@@ -2,26 +2,29 @@
 using NotesProject.Business.Models;
 using System.Collections.Generic;
 using System.Linq;
+using NotesProject.Business.Provider;
 
 namespace NotesProject.Business.Services.Implementations
 {
 	public class NoteRepository : INoteRepository
 	{
 		private static List<Note> Notes { get; set; }
-		
-		public NoteRepository()
+		private static int CurrentId { get; set; }
+		public NoteRepository(INoteProvider noteProvider)
 		{
-			Notes = new List<Note>(); 
+			Notes = noteProvider.CreateNoteList();
+			CurrentId = Notes.Count != 0 ? Notes.OrderBy(x => x.Id).Last().Id + 1 : 1; 
 		}
 
 		public void AddNote(string title, string text)
 		{
 			Notes.Add(new Note
 			{
-				Id = Notes.Count + 1,
+				Id = CurrentId,
 				Title = title,
 				Text = text,
 			});
+			CurrentId++;
 		}
 
 		public void EditNote(int id, string title, string text)

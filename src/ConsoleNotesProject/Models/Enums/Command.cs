@@ -6,6 +6,7 @@
 		List,
 		Delete,
 		Edit,
-		Help
+		Help,
+		Exit
 	}
 }
