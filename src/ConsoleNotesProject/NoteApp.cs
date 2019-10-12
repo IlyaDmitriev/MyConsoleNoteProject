@@ -2,28 +2,44 @@
 using ConsoleNotes.Services.Interfaces;
 using ConsoleNotes.Models;
 using System;
+using ConsoleNotes.Models.Enums;
 
 namespace ConsoleNotes
 {
 	public class NoteApp
 	{
-		private readonly ICommandService _commandService;
+		private readonly INoteService _noteService;
+		private readonly ICommandHelper _commandHelper;
+		private readonly IConsoleProvider _console;
 
-		public NoteApp(ICommandService commandService)
+		public NoteApp(
+			INoteService noteService,
+			ICommandHelper commandHelper,
+			IConsoleProvider console)
 		{
-			_commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+			_noteService = noteService ?? throw new ArgumentNullException(nameof(noteService));
+			_commandHelper = commandHelper ?? throw new ArgumentNullException(nameof(commandHelper));
+			_console = console ?? throw new ArgumentNullException(nameof(console));
 
-			Console.Title = $"{Constants.ProjectName} {Constants.Version}";
+			_console.SetTitle($"{Constants.ProjectName} {Constants.Version}");
 		}
 
 		public void Run()
 		{
 			while (true)
 			{
-				CommandHelper.BackToTheRoots();
-				CommandHelper.ShowInitialWindow();
-				_commandService.Handle(Console.ReadLine().Trim());
+				_commandHelper.BackToTheRoots();
+				ShowInitialWindow();
+				_noteService.Handle(_console.ReadLine().Trim());
 			}
+		}
+		private void ShowInitialWindow()
+		{
+			_console.WriteLine("#################################################################");
+			_console.WriteLine("#                           Enter command                       #");
+			_console.WriteLine($"#                Enter '{nameof(Command.Help)}', if you need help                 #");
+			_console.WriteLine("#################################################################");
+			_console.Write("> ");
 		}
 	}
 }

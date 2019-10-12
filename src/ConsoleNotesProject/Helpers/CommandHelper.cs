@@ -1,58 +1,26 @@
 ﻿using ConsoleNotes.Models;
 using ConsoleNotes.Models.Enums;
+using ConsoleNotes.Services.Interfaces;
 using System;
-using System.Collections.Generic;
 
 namespace ConsoleNotes.Helpers
 {
-	public class CommandHelper
+	public class CommandHelper : ICommandHelper
 	{
-		public static void BackToTheRoots()
+		private readonly IConsoleProvider _console;
+
+		public CommandHelper(IConsoleProvider console)
 		{
-			Console.Clear();
-			Console.WriteLine($"--->     {Constants.ProjectName} {Constants.Version}     <---");
-			Console.WriteLine();
+			_console = console ?? throw new ArgumentNullException(nameof(console));
 		}
 
-		public static void ShowInitialWindow()
+		public void BackToTheRoots()
 		{
-			Console.WriteLine("#################################################################");
-			Console.WriteLine("#                           Enter command                       #");
-			Console.WriteLine($"#                Enter '{nameof(Command.Help)}', if you need help                 #");
-			Console.WriteLine("#################################################################");
-			Console.Write("> ");
+			_console.Clear();
+			_console.WriteLine($"--->     {Constants.ProjectName} {Constants.Version}     <---");
+			_console.WriteLine();
 		}
 
-		public static void ShowHelp(Dictionary<Command, string> commandsWithDescription)
-		{
-			Console.WriteLine("#################################################################");
-			Console.WriteLine("#                             List of commands                    ");
-
-			foreach (var command in commandsWithDescription)
-			{
-				Console.WriteLine($"#      Enter '{nameof(command.Key)}', if you need to {command.Value}");
-			}
-
-			Console.WriteLine("#################################################################");
-		}
-
-		public static void DoActionOnResponse(string response, Action actionYes, Action actionNo)
-		{
-			var formattedResult = response.Trim().ToLower();
-
-			if (formattedResult == "y")
-			{
-				actionYes();
-			}
-			else if (formattedResult == "n")
-			{
-				actionNo();
-			}
-			else
-			{
-				Console.WriteLine("Wrong input! Pass only \"y\" or \"n\".");
-				DoActionOnResponse(Console.ReadLine().Trim().ToLower(), actionYes, actionNo);
-			}
-		}
+		
 	}
 }
