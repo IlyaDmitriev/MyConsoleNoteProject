@@ -1,4 +1,4 @@
-﻿namespace NotesProject.Business.Extensions
+﻿namespace NotesProject.Domain.Extensions
 {
 	public static class StringExtensions
 	{

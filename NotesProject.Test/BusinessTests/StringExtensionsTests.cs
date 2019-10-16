@@ -1,8 +1,6 @@
-﻿using NotesProject.Business.Extensions;
+﻿using NotesProject.Domain.Extensions;
 using NotesProject.Test.BusinessTests.Data;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace NotesProject.Test.BusinessTests

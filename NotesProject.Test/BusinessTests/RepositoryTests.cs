@@ -1,181 +1,195 @@
-﻿using AutoFixture;
-using Moq;
-using NotesProject.Business.Models;
-using NotesProject.Business.Provider;
-using NotesProject.Business.Services.Implementations;
-using NotesProject.Business.Services.Interfaces;
+﻿using Moq;
+using NotesProject.Application.Repositories;
+using NotesProject.DataBase.Interfaces;
+using NotesProject.DataBase.Services;
+using NotesProject.Domain.Interfaces;
+using NotesProject.Domain.Models;
+using NotesProject.Domain.Models.Entities;
+using NotesProject.Domain.Models.ValueObjects;
+using NotesProject.Infrastructure.Interfaces;
+using NotesProject.Infrastructure.Models;
 using NotesProject.Test.BusinessTests.Data;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace NotesProject.Test.BusinessTests
 {
-	public class RepositoryTests
-	{
-		private const string oldTitle = "OLD TITLE";
-		private const string oldText = "OLD TEXT";
-		private const string newTitle = "TITLE";
-		private const string newText = "TEXT";
+    public class RepositoryTests
+    {
+        private const string oldTitle = "OLD TITLE";
+        private const string oldText = "OLD TEXT";
+        private const string newTitle = "TITLE";
+        private const string newText = "TEXT";
 
 
-		private readonly Mock<INoteProvider> mock;
-		public RepositoryTests()
-		{
-			mock = new Mock<INoteProvider>();
-			mock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
-		}
+        private readonly Mock<INoteProvider> mock;
+        public RepositoryTests()
+        {
+            mock = new Mock<INoteProvider>();
+            mock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+        }
 
-		#region [ AddNoteTests ]
-		
-		[Theory]
-		[MemberData(nameof(NoteRepositoryData.AddNoteTest_ChangeListCount_Data), MemberType = typeof(NoteRepositoryData))]
-		public void AddNoteTest_When_Add_Then_ChangeListCount(string title, string text)
-		{						
-			var repository = new NoteRepository(mock.Object);
+        #region [ AddNoteTests ]
 
-			var countBefore = repository.GetNotes().Count;
-			repository.AddNote(title, text);
-			var countAfter = repository.GetNotes().Count;
+        [Theory]
+        [MemberData(nameof(NoteRepositoryData.AddNoteTest_ChangeListCount_Data), MemberType = typeof(NoteRepositoryData))]
+        public void AddNoteTest_When_Add_Then_ChangeListCount(string title, string text)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			Assert.Equal(countBefore + 1, countAfter);
-		}
+            var countBefore = repository.GetNotes().Count;
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
+            var countAfter = repository.GetNotes().Count;
 
-		[Theory]
-		[MemberData(nameof(NoteRepositoryData.AddNote_TextAndTitleHasSetValue_Data), MemberType = typeof(NoteRepositoryData))]
-		public void AddNoteTest_When_Add_Then_TextAndTitleHasSetValue(string title, string text)
-		{
-			var repository = new NoteRepository(mock.Object);
+            Assert.Equal(countBefore + 1, countAfter);
+        }
 
-			repository.AddNote(title, text);
+        [Theory]
+        [MemberData(nameof(NoteRepositoryData.AddNote_TextAndTitleHasSetValue_Data), MemberType = typeof(NoteRepositoryData))]
+        public void AddNoteTest_When_Add_Then_TextAndTitleHasSetValue(string title, string text)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
+            var notes = repository.GetNotes();
+
+            Assert.True(notes.Exists(x => x.Details.Title == title && x.Details.Text == text));
+        }
+
+        [Fact]
+        public void AddNoteTest_When_AddAfterDelete_Then_CorrectId()
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            for (var i = 1; i <= 5; i++)
+                repository.AddNote(new NoteDetails { Title = $"title{i}", Text = $"text{i}" });
+
+            repository.DeleteNote(4);
+            repository.AddNote(new NoteDetails { Title = $"title{6}", Text = $"text{6}" });
+            var notes = repository.GetNotes();
+
+            Assert.True(notes.FindAll(x => x.Id == 5).Count == 1);
+        }
+
+        #endregion
+        #region [ DeleteNoteTests ]
+
+        [Fact]
+        public void DeleteNoteTest_When_DeleteElementFromListWithElements_Then_Delete()
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
+            repository.AddNote(new NoteDetails { Title = "test1", Text = "test1" });
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
+            repository.AddNote(new NoteDetails { Title = "test3", Text = "test3" });
+            repository.AddNote(new NoteDetails { Title = "test4", Text = "test4" });
+
+            repository.DeleteNote(3);
+
+            Assert.False(repository.GetNotes().Exists(x => x.Details.Title == newTitle && x.Details.Text == newText));
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(666)]
+        public void DeleteNoteTest_When_ListElementsIsEmpty_Then_Error(int number)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-2)]
+        [InlineData(-666)]
+        public void DeleteNoteTest_When_IdLessOrEqualZeroOrNull_Then_Error(int number)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
+
+            Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
+        }
+
+        [Theory]
+        [InlineData(4)]
+        [InlineData(15)]
+        [InlineData(32)]
+        public void DeleteNoteTest_When_IdMoreThenListCount_Then_Error(int number)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
+
+            Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
+        }
+
+        #endregion
+        #region [ EditNoteTests ]
+
+        [Theory]
+        [MemberData(nameof(NoteRepositoryData.EditNote_NotSuccessfulEdit_Data), MemberType = typeof(NoteRepositoryData))]
+        public void EditNoteTest_When_BadData_Then_NotEdit(int number, string title, string text)
+        {
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            for (var i = 0; i <= 5; i++)
+            {
+                repository.AddNote(new NoteDetails { Title = $"{oldTitle}{i}", Text = $"{oldText}{i}" });
+            }
+
+            repository.EditNote(new Note { Id = number, Details = new NoteDetails { Title = title, Text = text } });
 			var notes = repository.GetNotes();
 
-			Assert.True(notes.Exists(x => x.Title == title && x.Text == text));
-		}
-
-		[Fact]
-		public void AddNoteTest_When_AddAfterDelete_Then_CorrectId()
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			for(var i = 1; i <= 5; i++)
-				repository.AddNote($"title{i}", $"text{i}");
-
-			repository.DeleteNote(4);
-			repository.AddNote($"title{6}", $"text{6}");
-			var notes = repository.GetNotes();
-
-			Assert.True(notes.FindAll(x => x.Id == 5).Count == 1);
-		}
-
-		#endregion
-		#region [ DeleteNoteTests ]
-
-		[Fact]
-		public void DeleteNoteTest_When_DeleteElementFromListWithElements_Then_Delete()
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			repository.AddNote("test", "test");
-			repository.AddNote("test1", "test1");
-			repository.AddNote(newTitle, newText);
-			repository.AddNote("test3", "test3");
-			repository.AddNote("test4", "test4");
-
-			repository.DeleteNote(3);
-
-			Assert.False(repository.GetNotes().Exists(x => x.Title == newTitle && x.Text == newText));
-		}
-
-		[Theory]
-		[InlineData(0)]
-		[InlineData(1)]
-		[InlineData(2)]
-		[InlineData(666)]
-		public void DeleteNoteTest_When_ListElementsIsEmpty_Then_Error(int number)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
-		}
-
-		[Theory]
-		[InlineData(0)]
-		[InlineData(-1)]
-		[InlineData(-2)]
-		[InlineData(-666)]
-		public void DeleteNoteTest_When_IdLessOrEqualZeroOrNull_Then_Error(int number)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			repository.AddNote("test", "test");
-
-			Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
-		}
-
-		[Theory]
-		[InlineData(4)]
-		[InlineData(15)]
-		[InlineData(32)]
-		public void DeleteNoteTest_When_IdMoreThenListCount_Then_Error(int number)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			repository.AddNote("test", "test");
-
-			Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
-		}
-
-		#endregion
-		#region [ EditNoteTests ]
-
-		[Theory]
-		[MemberData(nameof(NoteRepositoryData.EditNote_NotSuccessfulEdit_Data), MemberType = typeof(NoteRepositoryData))]
-		public void EditNoteTest_When_BadData_Then_NotEdit(int number, string title, string text)
-		{
-			var repository = new NoteRepository(mock.Object);
-
-			for(var i = 0; i <= 5; i++)
-			{
-				repository.AddNote($"{oldTitle}{i}", $"{oldText}{i}");
-			}		
-
-			repository.EditNote(number, title, text);
-			var notes = repository.GetNotes();
-
-			Assert.False(notes.Exists(x => x.Title == title && x.Text == text)
-				&& !notes.Exists(x => x.Title == $"{oldTitle}{number}" && x.Text == $"{oldText}{number}"));
+			Assert.False(notes.Exists(x => x.Details.Title == title && x.Details.Text == text)
+				&& !notes.Exists(x => x.Details.Title == $"{oldTitle}{number}" && x.Details.Text == $"{oldText}{number}"));
 		}
 
 		[Theory]
 		[MemberData(nameof(NoteRepositoryData.EditNote_SuccessfulEdit_Data), MemberType = typeof(NoteRepositoryData))]
 		public void EditNoteTest_When_ValidData_Then_Edit(int number, string title, string text)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			for (var i = 0; i <= number + 1; i++)
+            for (var i = 0; i <= number + 1; i++)
 			{
-				repository.AddNote($"{oldTitle}{i}", $"{oldTitle}{i}");
+                repository.AddNote(new NoteDetails { Title = $"{oldTitle}{i}", Text = $"{oldTitle}{i}" });
 			}
 
-			repository.EditNote(number, title, text);
+            repository.EditNote(new Note { Id = number, Details = new NoteDetails { Title = title, Text = text } });
 			var notes = repository.GetNotes();
 
-			Assert.True(!notes.Exists(x => x.Title == $"{oldTitle}{number}" && x.Text == $"{oldText}{number}")
-				&& notes.Exists(x => x.Title == title && x.Text == text));
+			Assert.True(!notes.Exists(x => x.Details.Title == $"{oldTitle}{number}" && x.Details.Text == $"{oldText}{number}")
+				&& notes.Exists(x => x.Details.Title == title && x.Details.Text == text));
 		}
 
 		[Theory]
 		[InlineData(0)]
 		public void EditNoteTest_When_IdIsZero_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.Throws<InvalidOperationException>(() => repository.EditNote(number, newTitle, newText));
-		}
+            Assert.Throws<InvalidOperationException>(
+                () => repository.EditNote(new Note { Id = number, Details = new NoteDetails { Title = newTitle, Text = newText }}));
+        }
 
 		[Theory]
 		[InlineData(-1)]
@@ -183,12 +197,14 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void EditNoteTest_When_IdLessThenZero_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.Throws<InvalidOperationException>(() => repository.EditNote(number, newTitle, newText));
-		}
+            Assert.Throws<InvalidOperationException>(
+                () => repository.EditNote(new Note { Id = number, Details = new NoteDetails { Title = newTitle, Text = newText } }));
+        }
 
 		[Theory]
 		[InlineData(1)]
@@ -196,12 +212,14 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void EditNoteTest_When_IdMoreThenListCount_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.Throws<InvalidOperationException>(() => repository.EditNote(number + 5, newTitle, newText));
-		}
+            Assert.Throws<InvalidOperationException>(
+                () => repository.EditNote(new Note { Id = number + 5, Details = new NoteDetails { Title = newTitle, Text = newText } }));
+        }
 
 		#endregion
 		#region [ GetNoteTests ]
@@ -212,15 +230,16 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void GetNoteTest_When_ElementExistInList_Then_True(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			for (var i = 1; i <= number + 1; i++)
+            for (var i = 1; i <= number + 1; i++)
 			{
-				repository.AddNote($"{newTitle}{i}", $"{newText}{i}");
-			}
+                repository.AddNote(new NoteDetails { Title = $"{newTitle}{i}", Text = $"{newText}{i}" });
+            }
 
-			Assert.True(repository.GetNote(number).Title == $"{newTitle}{number}"
-				&& repository.GetNote(number).Text == $"{newText}{number}");
+			Assert.True(repository.GetNote(number).Details.Title == $"{newTitle}{number}"
+				&& repository.GetNote(number).Details.Text == $"{newText}{number}");
 		}
 
 		[Theory]
@@ -230,22 +249,24 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void GetNoteTest_When_ElementIdIsLessOrEquelZero_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
-			
-			repository.AddNote(newTitle, newText);			
-			
-			Assert.Throws<InvalidOperationException>(() => repository.GetNote(number));
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
+
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
+
+            Assert.Throws<InvalidOperationException>(() => repository.GetNote(number));
 		}
 
 		[Theory]
 		[InlineData(0)]
 		public void GetNoteTest_When_ElementEqualZero_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.Throws<InvalidOperationException>(() => repository.GetNote(number));
+            Assert.Throws<InvalidOperationException>(() => repository.GetNote(number));
 		}
 
 		[Theory]
@@ -254,11 +275,12 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void GetNoteTest_When_ElementMoreThenListCount_Then_Error(int number)
 		{
-			var repository = new NoteRepository(mock.Object); ;
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.Throws<InvalidOperationException>(() => repository.GetNote(number + 5));
+            Assert.Throws<InvalidOperationException>(() => repository.GetNote(number + 5));
 		}
 
 		#endregion
@@ -271,9 +293,10 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(666)]		
 		public void IsNoteExistTest_When_ListElementsIsEmpty_Then_False(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			Assert.False(repository.IsNoteExist(number));
+            Assert.False(repository.IsNoteExist(number));
 		}
 
 		[Theory]
@@ -282,14 +305,15 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void IsNoteExistTest_When_ElementExistInList_Then_True(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			for (var i = 0; i <= number + 1; i++)
+            for (var i = 0; i <= number + 1; i++)
 			{
-				repository.AddNote($"{newTitle}{i}", $"{newText}{i}");
-			}
+                repository.AddNote(new NoteDetails { Title = $"{newTitle}{i}", Text = $"{newText}{i}" });
+            }
 
-			Assert.True(repository.IsNoteExist(number));
+            Assert.True(repository.IsNoteExist(number));
 		}
 
 		[Theory]
@@ -298,11 +322,12 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void IsNoteExistTest_When_ElementNotExistInList_Then_False(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			repository.AddNote(newTitle, newText);
+            repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
 
-			Assert.False(repository.IsNoteExist(number));
+            Assert.False(repository.IsNoteExist(number));
 		}
 
 		[Theory]
@@ -312,12 +337,13 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void IsNoteExistTest_When_ElementIdIsLessOrEquelZero_Then_False(int number)
 		{
-			var repository = new NoteRepository(mock.Object);
+            var context = new DataBaseService(mock.Object);
+            var repository = new NoteRepository(context);
 
-			for (var i = 0; i <= number + 1; i++)
+            for (var i = 0; i <= number + 1; i++)
 			{
-				repository.AddNote(newTitle + $"{i}", newText + $"{i}");
-			}
+                repository.AddNote(new NoteDetails { Title = $"{newTitle}{i}", Text = $"{newText}{i}" });
+            }
 
 			Assert.False(repository.IsNoteExist(number));
 		}

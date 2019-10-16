@@ -1,9 +1,6 @@
-﻿using ConsoleNotes.Helpers;
-using ConsoleNotes.Services.Interfaces;
+﻿using ConsoleNotes.Services.Interfaces;
 using ConsoleNotes.Models.Enums;
-using NotesProject.Business.Extensions;
 using System;
-using NotesProject.Business.Services.Interfaces;
 using System.Linq;
 using System.Collections.Generic;
 
