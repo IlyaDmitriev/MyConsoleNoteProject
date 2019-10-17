@@ -27,7 +27,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.List))).Returns((Command.List, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var title = "title";
 			var text = "text";
@@ -38,7 +37,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             repository.AddNote(new NoteDetails { Title = title, Text = text });
             var fakeConsoleProvider = new FakeConsoleProvider(null);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             
 			var service = new NoteConsoleService(
@@ -61,14 +60,13 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.List))).Returns((Command.List, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var context = new DataBaseService(noteProviderMock.Object);
             var repository = new NoteRepository(context);
 
             var fakeConsoleProvider = new FakeConsoleProvider(null);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -87,7 +85,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Add))).Returns((Command.Add, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var title = "title";
 			var text = "text";
@@ -97,7 +94,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -120,7 +117,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Add))).Returns((Command.Add, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var title = string.Empty;
 			var text = string.Empty;
@@ -130,7 +126,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -153,7 +149,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "text";
 
@@ -162,7 +157,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -184,7 +179,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "54";
 
@@ -194,7 +188,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -216,7 +210,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "1";
 
@@ -226,7 +219,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -248,7 +241,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "text";
 
@@ -257,7 +249,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -279,7 +271,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "44";
 
@@ -289,7 +280,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -311,7 +302,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "1";
 			var title = "title";
@@ -326,7 +316,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -351,7 +341,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "1";
 			var title = "title";
@@ -366,7 +355,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -391,7 +380,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "1";
 			var title = "title";
@@ -407,7 +395,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,
@@ -431,7 +419,6 @@ namespace NotesProject.Test.ConsoleNotesTests
 			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
-            var noteServiceMock = new Mock<INoteService>();
 
             var id = "1";
 			var title = "title";
@@ -448,7 +435,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThatNotCorrect, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object, noteServiceMock.Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
             var service = new NoteConsoleService(
                 commandHandlerMock.Object,

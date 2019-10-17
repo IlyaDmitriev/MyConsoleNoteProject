@@ -16,14 +16,12 @@ namespace NotesProject.ConsoleUI.Services.Implementations
         private readonly IConsoleProvider _console;
         private readonly INoteRepository _noteRepository;
         private readonly ICommandHelper _commandHelper;
-        private readonly INoteService _noteService;
 
-        public ConsoleRepository(IConsoleProvider console, INoteRepository noteRepository, ICommandHelper commandHelper, INoteService noteService)
+        public ConsoleRepository(IConsoleProvider console, INoteRepository noteRepository, ICommandHelper commandHelper)
         {
             _console = console ?? throw new ArgumentNullException(nameof(console));
             _noteRepository = noteRepository ?? throw new ArgumentNullException(nameof(noteRepository));
             _commandHelper = commandHelper ?? throw new ArgumentNullException(nameof(commandHelper));
-            _noteService = noteService ?? throw new ArgumentNullException(nameof(noteService));
 
             _commandsWithDescription = new Dictionary<Command, string>
             {
@@ -62,7 +60,7 @@ namespace NotesProject.ConsoleUI.Services.Implementations
             _console.WriteLine("Do you want to add another note? (y/n)");
             DoActionOnResponse(
                 _console.ReadLine(),
-                () => { _noteService.Handle(Command.Add); },
+                () => { AddNote(); },
                 () => { _commandHelper.BackToTheRoots(); });
         }
 
@@ -115,7 +113,7 @@ namespace NotesProject.ConsoleUI.Services.Implementations
             _console.WriteLine("Do you want to delete another note? (y/n)");
             DoActionOnResponse(
                 _console.ReadLine(),
-                () => { _noteService.Handle(Command.Delete); },
+                () => { DeleteNote(); },
                 () => { _commandHelper.BackToTheRoots(); });
         }
 
@@ -172,7 +170,7 @@ namespace NotesProject.ConsoleUI.Services.Implementations
             _console.WriteLine("Do you want to edit another note? (y/n)");
             DoActionOnResponse(
                 _console.ReadLine(),
-                () => { _noteService.Handle(Command.Edit); },
+                () => { EditNote(); },
                 () => { _commandHelper.BackToTheRoots(); });
         }
 

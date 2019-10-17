@@ -6,19 +6,32 @@ using NotesProject.Infrastructure.Interfaces;
 using NotesProject.Infrastructure.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace NotesProject.DataBase.Services
 {
     public class DataBaseService : IContext
     {
+        private string Path => @"D:\NotesStorage";
         private static List<NoteDto> Notes;
         private static int CurrentId { get; set; }
 
         public DataBaseService(INoteProvider noteProvider)
         {
             Notes = noteProvider.CreateNoteList();
+
+            var dirInfo = new DirectoryInfo(Path);
+            if (!dirInfo.Exists)
+            {
+                dirInfo.Create();
+
+                using (FileStream fstream = new FileStream(Path + @"\AllNotes.txt", FileMode.Create))
+                { }
+            }
+
             CurrentId = Notes.Count != 0 ? Notes.OrderBy(x => x.Id).Last().Id + 1 : 1;
         }
 
@@ -37,7 +50,7 @@ namespace NotesProject.DataBase.Services
             Notes.Remove(GetNote(id));
         }
 
-        public void EditNote(Infrastructure.Models.NoteDto note)
+        public void EditNote(NoteDto note)
         {
             var toEdit = GetNote(note.Id);
 
@@ -49,7 +62,7 @@ namespace NotesProject.DataBase.Services
             return Notes.First(x => x.Id == id);
         }
 
-        public List<Infrastructure.Models.NoteDto> GetNotes()
+        public List<NoteDto> GetNotes()
         {
             return Notes;
         }
