@@ -24,8 +24,11 @@ namespace NotesProject.Test.BusinessTests
 
 
         private readonly Mock<INoteProvider> mock;
+        private readonly IFileService _fileservice;
+
         public RepositoryTests()
         {
+            _fileservice = new Mock<IFileService>().Object;
             mock = new Mock<INoteProvider>();
             mock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
         }
@@ -36,7 +39,7 @@ namespace NotesProject.Test.BusinessTests
         [MemberData(nameof(NoteRepositoryData.AddNoteTest_ChangeListCount_Data), MemberType = typeof(NoteRepositoryData))]
         public void AddNoteTest_When_Add_Then_ChangeListCount(string title, string text)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             var countBefore = repository.GetNotes().Count;
@@ -50,7 +53,7 @@ namespace NotesProject.Test.BusinessTests
         [MemberData(nameof(NoteRepositoryData.AddNote_TextAndTitleHasSetValue_Data), MemberType = typeof(NoteRepositoryData))]
         public void AddNoteTest_When_Add_Then_TextAndTitleHasSetValue(string title, string text)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = title, Text = text });
@@ -62,7 +65,7 @@ namespace NotesProject.Test.BusinessTests
         [Fact]
         public void AddNoteTest_When_AddAfterDelete_Then_CorrectId()
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 1; i <= 5; i++)
@@ -81,7 +84,7 @@ namespace NotesProject.Test.BusinessTests
         [Fact]
         public void DeleteNoteTest_When_DeleteElementFromListWithElements_Then_Delete()
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
@@ -102,7 +105,7 @@ namespace NotesProject.Test.BusinessTests
         [InlineData(666)]
         public void DeleteNoteTest_When_ListElementsIsEmpty_Then_Error(int number)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             Assert.Throws<InvalidOperationException>(() => repository.DeleteNote(number));
@@ -115,7 +118,7 @@ namespace NotesProject.Test.BusinessTests
         [InlineData(-666)]
         public void DeleteNoteTest_When_IdLessOrEqualZeroOrNull_Then_Error(int number)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
@@ -129,7 +132,7 @@ namespace NotesProject.Test.BusinessTests
         [InlineData(32)]
         public void DeleteNoteTest_When_IdMoreThenListCount_Then_Error(int number)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = "test", Text = "test" });
@@ -144,7 +147,7 @@ namespace NotesProject.Test.BusinessTests
         [MemberData(nameof(NoteRepositoryData.EditNote_NotSuccessfulEdit_Data), MemberType = typeof(NoteRepositoryData))]
         public void EditNoteTest_When_BadData_Then_NotEdit(int number, string title, string text)
         {
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 0; i <= 5; i++)
@@ -163,7 +166,7 @@ namespace NotesProject.Test.BusinessTests
 		[MemberData(nameof(NoteRepositoryData.EditNote_SuccessfulEdit_Data), MemberType = typeof(NoteRepositoryData))]
 		public void EditNoteTest_When_ValidData_Then_Edit(int number, string title, string text)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 0; i <= number + 1; i++)
@@ -182,7 +185,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(0)]
 		public void EditNoteTest_When_IdIsZero_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -197,7 +200,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void EditNoteTest_When_IdLessThenZero_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -212,7 +215,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void EditNoteTest_When_IdMoreThenListCount_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -230,7 +233,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void GetNoteTest_When_ElementExistInList_Then_True(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 1; i <= number + 1; i++)
@@ -249,7 +252,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void GetNoteTest_When_ElementIdIsLessOrEquelZero_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -261,7 +264,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(0)]
 		public void GetNoteTest_When_ElementEqualZero_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -275,7 +278,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void GetNoteTest_When_ElementMoreThenListCount_Then_Error(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -293,7 +296,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(666)]		
 		public void IsNoteExistTest_When_ListElementsIsEmpty_Then_False(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             Assert.False(repository.IsNoteExist(number));
@@ -305,7 +308,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void IsNoteExistTest_When_ElementExistInList_Then_True(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 0; i <= number + 1; i++)
@@ -322,7 +325,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(32)]
 		public void IsNoteExistTest_When_ElementNotExistInList_Then_False(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             repository.AddNote(new NoteDetails { Title = newTitle, Text = newText });
@@ -337,7 +340,7 @@ namespace NotesProject.Test.BusinessTests
 		[InlineData(-32)]
 		public void IsNoteExistTest_When_ElementIdIsLessOrEquelZero_Then_False(int number)
 		{
-            var context = new DataBaseService(mock.Object);
+            var context = new DataBaseService(mock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             for (var i = 0; i <= number + 1; i++)

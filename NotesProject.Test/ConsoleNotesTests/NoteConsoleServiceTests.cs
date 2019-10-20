@@ -20,7 +20,14 @@ namespace NotesProject.Test.ConsoleNotesTests
 {
 	public class NoteConsoleServiceTests
 	{
-		[Fact]
+        private readonly IFileService _fileservice;
+
+        public NoteConsoleServiceTests()
+        {
+            _fileservice = new Mock<IFileService>().Object;
+        }
+
+        [Fact]
 		public void ShowNoteTest_When_HasElements_Then_ShowList()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
@@ -32,7 +39,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var text = "text";
 			var id = 1;
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = title, Text = text });
             var fakeConsoleProvider = new FakeConsoleProvider(null);
@@ -61,7 +68,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var commandHandlerMock = new Mock<ICommandHelper>();
             commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.List))).Returns((Command.List, true));
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
 
             var fakeConsoleProvider = new FakeConsoleProvider(null);
@@ -89,7 +96,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var title = "title";
 			var text = "text";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
@@ -121,7 +128,7 @@ namespace NotesProject.Test.ConsoleNotesTests
             var title = string.Empty;
 			var text = string.Empty;
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
@@ -152,7 +159,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 
             var id = "text";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
@@ -182,7 +189,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 
             var id = "54";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
             var linesToRead = new List<string>() { id, "n" };
@@ -213,7 +220,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 
             var id = "1";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
             var linesToRead = new List<string>() { id, "n" };
@@ -244,7 +251,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 
             var id = "text";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
@@ -274,7 +281,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 
             var id = "44";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
             var linesToRead = new List<string>() { id, "n" };
@@ -310,7 +317,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var newText = "newText";
 			var areYouSureAboutThat = "y";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = title, Text = text });
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
@@ -349,7 +356,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var newText = string.Empty;
 			var areYouSureAboutThat = "y";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = title, Text = text });
             var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
@@ -388,7 +395,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var newText = string.Empty;
 			var areYouSureAboutThat = "n";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = title, Text = text });
 
@@ -428,7 +435,7 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var areYouSureAboutThatNotCorrect = "error";
 			var areYouSureAboutThat = "y";
 
-            var context = new DataBaseService(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
             var repository = new NoteRepository(context);
             repository.AddNote(new NoteDetails { Title = title, Text = text });
 

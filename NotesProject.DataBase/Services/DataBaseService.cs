@@ -15,61 +15,67 @@ namespace NotesProject.DataBase.Services
 {
     public class DataBaseService : IContext
     {
-        private string Path => @"D:\NotesStorage";
         private static List<NoteDto> Notes;
+
+        private readonly IFileService _fileService;
         private static int CurrentId { get; set; }
 
-        public DataBaseService(INoteProvider noteProvider)
+        public DataBaseService(INoteProvider noteProvider, IFileService fileService)
         {
+            _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
             Notes = noteProvider.CreateNoteList();
-
-            var dirInfo = new DirectoryInfo(Path);
-            if (!dirInfo.Exists)
-            {
-                dirInfo.Create();
-
-                using (FileStream fstream = new FileStream(Path + @"\AllNotes.txt", FileMode.Create))
-                { }
-            }
-
             CurrentId = Notes.Count != 0 ? Notes.OrderBy(x => x.Id).Last().Id + 1 : 1;
+
+            _fileService.CreateDirectory();
         }
 
         public void AddNote(NoteDetailsDto details)
         {
-            Notes.Add(new NoteDto
-            {
-                Id = CurrentId,
-                Details = new NoteDetailsDto { Title = details.Title, Text = details.Text }
-            });
-            CurrentId++;
+            //Notes.Add(new NoteDto
+            //{
+            //    Id = CurrentId,
+            //    Details = new NoteDetailsDto { Title = details.Title, Text = details.Text }
+            //});
+            //CurrentId++;
+
+            _fileService.AddFile(details);
         }
 
         public void DeleteNote(int id)
         {
-            Notes.Remove(GetNote(id));
+            //Notes.Remove(GetNote(id));
+
+            _fileService.DeleteFile(id);
         }
 
         public void EditNote(NoteDto note)
         {
-            var toEdit = GetNote(note.Id);
+            //var toEdit = GetNote(note.Id);
 
-            toEdit.Details = note.Details;
+            //toEdit.Details = note.Details;
+
+            _fileService.EditFile(note);
         }
 
         public NoteDto GetNote(int id)
         {
-            return Notes.First(x => x.Id == id);
+            //return Notes.First(x => x.Id == id);
+
+            return _fileService.GetDataFromFile(id);
         }
 
         public List<NoteDto> GetNotes()
         {
-            return Notes;
+            //return Notes;
+
+            return _fileService.GetDataFromAllFiles();
         }
 
         public bool IsNoteExist(int id)
         {
-            return Notes.Any(x => x.Id == id);
+            //return Notes.Any(x => x.Id == id);
+
+            return _fileService.IsFileExist(id);
         }
     }
 }

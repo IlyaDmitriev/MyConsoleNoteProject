@@ -3,6 +3,7 @@ using NotesProject.Application.Repositories;
 using NotesProject.ConsoleUI.Helpers;
 using NotesProject.ConsoleUI.Services.Implementations;
 using NotesProject.ConsoleUI.Services.Interfaces;
+using NotesProject.DataBase.FileServices;
 using NotesProject.DataBase.Interfaces;
 using NotesProject.DataBase.Services;
 using NotesProject.Domain.Interfaces;
@@ -36,6 +37,7 @@ namespace NotesProject.ConsoleUI
 			serviceCollection.AddTransient<ICommandHelper, CommandHelper>();
             serviceCollection.AddTransient<IConsoleRepository, ConsoleRepository>();
             serviceCollection.AddTransient<IContext, DataBaseService>();
+            serviceCollection.AddTransient<IFileService, FileService>();
 
 			// add app
 			serviceCollection.AddTransient<NoteApp>();

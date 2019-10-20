@@ -8,8 +8,4 @@
     <ProjectReference Include="..\NotesProject.Infrastructure\NotesProject.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="NotesStorage\" />
-  </ItemGroup>
-
 </Project>
