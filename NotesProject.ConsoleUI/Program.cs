@@ -1,10 +1,16 @@
-﻿
-using ConsoleNotes.Helpers;
-using ConsoleNotes.Services.Implementations;
-using ConsoleNotes.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
+using NotesProject.Application.Repositories;
+using NotesProject.ConsoleUI.Helpers;
+using NotesProject.ConsoleUI.Services.Implementations;
+using NotesProject.ConsoleUI.Services.Interfaces;
+using NotesProject.DataBase.FileServices;
+using NotesProject.DataBase.Interfaces;
+using NotesProject.DataBase.Services;
+using NotesProject.Domain.Interfaces;
+using NotesProject.Domain.Services;
+using NotesProject.Infrastructure.Interfaces;
 
-namespace ConsoleNotes
+namespace NotesProject.ConsoleUI
 {
 	class Program 
 	{
@@ -29,6 +35,9 @@ namespace ConsoleNotes
 			serviceCollection.AddTransient<INoteService, NoteConsoleService>();
 			serviceCollection.AddTransient<INoteProvider, NoteProvider>();
 			serviceCollection.AddTransient<ICommandHelper, CommandHelper>();
+            serviceCollection.AddTransient<IConsoleRepository, ConsoleRepository>();
+            serviceCollection.AddTransient<IContext, DataBaseService>();
+            serviceCollection.AddTransient<IFileService, FileService>();
 
 			// add app
 			serviceCollection.AddTransient<NoteApp>();

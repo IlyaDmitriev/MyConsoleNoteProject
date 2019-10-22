@@ -1,10 +1,17 @@
-﻿using ConsoleNotes.Services.Implementations;
-using ConsoleNotes.Services.Interfaces;
-using ConsoleNotes.Models.Enums;
-using Moq;
-using NotesProject.Business.Models;
-using NotesProject.Business.Services.Implementations;
-using NotesProject.Business.Services.Interfaces;
+﻿using Moq;
+using NotesProject.Application.Repositories;
+using NotesProject.ConsoleUI.Helpers;
+using NotesProject.ConsoleUI.Models.Enums;
+using NotesProject.ConsoleUI.Services.Implementations;
+using NotesProject.ConsoleUI.Services.Interfaces;
+using NotesProject.DataBase.Interfaces;
+using NotesProject.DataBase.Services;
+using NotesProject.Domain.Interfaces;
+using NotesProject.Domain.Models;
+using NotesProject.Domain.Models.Entities;
+using NotesProject.Domain.Models.ValueObjects;
+using NotesProject.Infrastructure.Interfaces;
+using NotesProject.Infrastructure.Models;
 using System;
 using System.Collections.Generic;
 using Xunit;
@@ -13,24 +20,36 @@ namespace NotesProject.Test.ConsoleNotesTests
 {
 	public class NoteConsoleServiceTests
 	{
-		[Fact]
+        private readonly IFileService _fileservice;
+
+        public NoteConsoleServiceTests()
+        {
+            _fileservice = new Mock<IFileService>().Object;
+        }
+
+        [Fact]
 		public void ShowNoteTest_When_HasElements_Then_ShowList()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.List))).Returns((Command.List, true));
 
-			var title = "title";
+            var title = "title";
 			var text = "text";
 			var id = 1;
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote(title, text);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
+            var fakeConsoleProvider = new FakeConsoleProvider(null);
 
-			var fakeConsoleProvider = new FakeConsoleProvider(null);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            
 			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.List));
 
@@ -45,15 +64,20 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void ShowNoteTest_When_NoElements_Then_ShowInfoMessage()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.List))).Returns((Command.List, true));
 
-			var repository = new NoteRepository(noteProviderMock.Object);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
 
-			var fakeConsoleProvider = new FakeConsoleProvider(null);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+            var fakeConsoleProvider = new FakeConsoleProvider(null);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.List));
 			var expected = $"There are zero notes.{Environment.NewLine}" +
@@ -65,18 +89,23 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void AddNoteTest_When_CorrectTitleOrText_Then_Add()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Add))).Returns((Command.Add, true));
 
-			var title = "title";
+            var title = "title";
 			var text = "text";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			var linesToRead = new List<string>() { title, text, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository, 
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Add));
 
@@ -92,18 +121,23 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void AddNoteTest_When_NotCorrectTitleOrText_Then_NotAdd()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Add))).Returns((Command.Add, true));
 
-			var title = string.Empty;
+            var title = string.Empty;
 			var text = string.Empty;
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			var linesToRead = new List<string>() { title, text, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            var linesToRead = new List<string>() { title, text, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Add));
 
@@ -119,17 +153,22 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void DeleteNoteTest_When_IdNotCorrect_Then_NotDeleted()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
 
-			var id = "text";
+            var id = "text";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			var linesToRead = new List<string>() { id, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Delete));
 
@@ -144,18 +183,23 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void DeleteNoteTest_When_CorrectIdAndNoteNotExists_Then_NotDeleted()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
 
-			var id = "54";
+            var id = "54";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote("title", "text");
-			var linesToRead = new List<string>() { id, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
+            var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Delete));
 
@@ -170,18 +214,23 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void DeleteNoteTest_When_CorrectIdAndNoteExists_Then_Delete()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Delete))).Returns((Command.Delete, true));
 
-			var id = "1";
+            var id = "1";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote("title", "text");
-			var linesToRead = new List<string>() { id, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
+            var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Delete));
 
@@ -196,17 +245,22 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_IdNotCorrect_Then_NotEdit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "text";
+            var id = "text";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			var linesToRead = new List<string>() { id, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
 
 			service.Handle(nameof(Command.Edit));
 
@@ -221,20 +275,25 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_IdNotCorrectAndNotExist_Then_NotEdit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "44";
+            var id = "44";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote("title", "text");
-			var linesToRead = new List<string>() { id, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = "title", Text = "text" });
+            var linesToRead = new List<string>() { id, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
 
-			service.Handle(nameof(Command.Edit));
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
+
+            service.Handle(nameof(Command.Edit));
 
 			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
 				$"The note with id [{id}] is not exist in the list of notes.{Environment.NewLine}" +
@@ -247,25 +306,30 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_DataCorrect_Then_Edit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "1";
+            var id = "1";
 			var title = "title";
 			var text = "text";
 			var newTitle = "newTitle";
 			var newText = "newText";
 			var areYouSureAboutThat = "y";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote(title, text);
-			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
+            var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
 
-			service.Handle(nameof(Command.Edit));
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
+
+            service.Handle(nameof(Command.Edit));
 
 			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
 				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
@@ -281,25 +345,30 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_TitleAndTextAreEmpty_Then_NotEdit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "1";
+            var id = "1";
 			var title = "title";
 			var text = "text";
 			var newTitle = string.Empty;
 			var newText = string.Empty;
 			var areYouSureAboutThat = "y";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote(title, text);
-			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
+            var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
 
-			service.Handle(nameof(Command.Edit));
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
+
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
+
+            service.Handle(nameof(Command.Edit));
 
 			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
 				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
@@ -315,27 +384,31 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_YouNotSureAfterChangeTitle_Then_NotEdit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "1";
+            var id = "1";
 			var title = "title";
 			var text = "text";
 			var newTitle = string.Empty;
 			var newText = string.Empty;
 			var areYouSureAboutThat = "n";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote(title, text);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
 
-			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
+            var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
-			service.Handle(nameof(Command.Edit));
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
+
+            service.Handle(nameof(Command.Edit));
 
 			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
 				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +
@@ -350,9 +423,11 @@ namespace NotesProject.Test.ConsoleNotesTests
 		public void EditNoteTest_When_NotCorrectareYouSureAboutThat_Then_NotEdit()
 		{
 			var noteProviderMock = new Mock<INoteProvider>();
-			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<Note>());
+			noteProviderMock.Setup(x => x.CreateNoteList()).Returns(new List<NoteDto>());
+            var commandHandlerMock = new Mock<ICommandHelper>();
+            commandHandlerMock.Setup(x => x.ParcingCommands(nameof(Command.Edit))).Returns((Command.Edit, true));
 
-			var id = "1";
+            var id = "1";
 			var title = "title";
 			var text = "text";
 			var newTitle = string.Empty;
@@ -360,18 +435,20 @@ namespace NotesProject.Test.ConsoleNotesTests
 			var areYouSureAboutThatNotCorrect = "error";
 			var areYouSureAboutThat = "y";
 
-			var repository = new NoteRepository(noteProviderMock.Object);
-			repository.AddNote(title, text);
+            var context = new DataBaseService(noteProviderMock.Object, _fileservice);
+            var repository = new NoteRepository(context);
+            repository.AddNote(new NoteDetails { Title = title, Text = text });
 
-			var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThatNotCorrect, areYouSureAboutThat, newText, "n" };
+            var linesToRead = new List<string>() { id, newTitle, areYouSureAboutThatNotCorrect, areYouSureAboutThat, newText, "n" };
 			var fakeConsoleProvider = new FakeConsoleProvider(linesToRead);
 
-			var service = new NoteConsoleService(
-				repository,
-				fakeConsoleProvider,
-				new Mock<ICommandHelper>().Object);
+            var consoleRepositoryMock = new ConsoleRepository(fakeConsoleProvider, repository, commandHandlerMock.Object);
 
-			service.Handle(nameof(Command.Edit));
+            var service = new NoteConsoleService(
+                commandHandlerMock.Object,
+                consoleRepositoryMock);
+
+            service.Handle(nameof(Command.Edit));
 
 			var expected = $"Please enter id of note to edit:{Environment.NewLine}" +
 				$"Current title of this note: {title}. Pick a new title:{Environment.NewLine}" +

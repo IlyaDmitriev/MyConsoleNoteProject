@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -16,8 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\ConsoleNotesProject\ConsoleNotes.csproj" />
-    <ProjectReference Include="..\src\NotesProject.Business\NotesProject.Business.csproj" />
+    <ProjectReference Include="..\NotesProject.Application\NotesProject.Application.csproj" />
+    <ProjectReference Include="..\NotesProject.ConsoleUI\NotesProject.ConsoleUI.csproj" />
+    <ProjectReference Include="..\NotesProject.Domain\NotesProject.Domain.csproj" />
   </ItemGroup>
 
 </Project>
